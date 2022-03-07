@@ -39,7 +39,7 @@ class Tasks:
 
                     self.pushOrder(position, spec_order)
 
-                elif new_status == "CANCELED" or new_status == "REJECTED":
+                elif new_status in ["CANCELED", "REJECTED"]:
 
                     other = {
                         "Symbol": position["Symbol"],

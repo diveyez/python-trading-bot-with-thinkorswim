@@ -74,20 +74,15 @@ class TDAmeritrade:
 
         if age_sec >= user["Accounts"][self.account_id]['expires_in'] - 60:
 
-            token = self.getNewTokens(user["Accounts"][self.account_id])
-
-            if token:
-
-                # ADD NEW TOKEN DATA TO USER DATA IN DB
-                self.users.update_one({"Name": self.user["Name"]}, {
-                    "$set": {f"Accounts.{self.account_id}.expires_in": token['expires_in'], f"Accounts.{self.account_id}.access_token": token["access_token"], f"Accounts.{self.account_id}.created_at": time.time()}})
-
-                self.header.update({
-                    "Authorization": f"Bearer {token['access_token']}"})
-
-            else:
-
+            if not (token := self.getNewTokens(user["Accounts"][self.account_id])):
                 return False
+
+            # ADD NEW TOKEN DATA TO USER DATA IN DB
+            self.users.update_one({"Name": self.user["Name"]}, {
+                "$set": {f"Accounts.{self.account_id}.expires_in": token['expires_in'], f"Accounts.{self.account_id}.access_token": token["access_token"], f"Accounts.{self.account_id}.created_at": time.time()}})
+
+            self.header.update({
+                "Authorization": f"Bearer {token['access_token']}"})
 
         # CHECK IF REFRESH TOKEN NEEDS UPDATED
         now = datetime.strptime(datetime.strftime(
@@ -100,11 +95,9 @@ class TDAmeritrade:
 
         if days_left <= 5:
 
-            token = self.getNewTokens(
-                user["Accounts"][self.account_id], refresh_type="Refresh Token")
-
-            if token:
-
+            if token := self.getNewTokens(
+                user["Accounts"][self.account_id], refresh_type="Refresh Token"
+            ):
                 # ADD NEW TOKEN DATA TO USER DATA IN DB
                 self.users.update_one({"Name": self.user["Name"]}, {
                     "$set": {f"{self.account_id}.refresh_token": token['refresh_token'], f"{self.account_id}.refresh_exp_date": (datetime.now().replace(
@@ -114,7 +107,6 @@ class TDAmeritrade:
                     "Authorization": f"Bearer {token['access_token']}"})
 
             else:
-
                 return False
 
         return True

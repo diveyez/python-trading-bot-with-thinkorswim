@@ -56,7 +56,7 @@ class Gmail:
 
                 self.creds = flow.run_local_server(port=0)
 
-            elif self.creds and self.creds.expired and self.creds.refresh_token:
+            elif self.creds.expired and self.creds.refresh_token:
 
                 self.creds.refresh(Request())
 
@@ -243,11 +243,11 @@ class Gmail:
                     result = self.service.users().messages().get(
                         id=message["id"], userId="me", format="metadata").execute()
 
-                    for payload in result['payload']["headers"]:
-
-                        if payload["name"] == "Subject":
-
-                            payloads.append(payload["value"].strip())
+                    payloads.extend(
+                        payload["value"].strip()
+                        for payload in result['payload']["headers"]
+                        if payload["name"] == "Subject"
+                    )
 
                     # MOVE EMAIL TO TRASH FOLDER
                     self.service.users().messages().trash(

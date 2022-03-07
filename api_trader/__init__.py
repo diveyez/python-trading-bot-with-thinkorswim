@@ -18,7 +18,7 @@ path = Path(THIS_FOLDER)
 
 load_dotenv(dotenv_path=f"{path.parent}/config.env")
 
-RUN_TASKS = True if os.getenv('RUN_TASKS') == "True" else False
+RUN_TASKS = os.getenv('RUN_TASKS') == "True"
 
 
 class ApiTrader(Tasks, OrderBuilder):
@@ -34,8 +34,8 @@ class ApiTrader(Tasks, OrderBuilder):
             asset_type ([str]): [ACCOUNT ASSET TYPE (EQUITY, OPTIONS)]
         """
 
-        self.RUN_LIVE_TRADER = True if user["Accounts"][str(
-            account_id)]["Account_Position"] == "Live" else False
+        self.RUN_LIVE_TRADER = user["Accounts"][str(
+            account_id)]["Account_Position"] == "Live"
 
         self.tdameritrade = tdameritrade
 
@@ -103,7 +103,7 @@ class ApiTrader(Tasks, OrderBuilder):
 
             order, obj = self.OCOorder(trade_data, strategy_object, direction)
 
-        if order == None and obj == None:
+        if order is None and obj is None:
 
             return
 
@@ -224,15 +224,14 @@ class ApiTrader(Tasks, OrderBuilder):
 
                 if new_status == "FILLED":
 
-                    # CHECK IF OCO ORDER AND THEN GET THE CHILDREN
-                    if queue_order["Order_Type"] == "OCO":
+                    if order_type == "OCO":
 
                         queue_order = {**queue_order, **
                                        self.extractOCOchildren(spec_order)}
 
                     self.pushOrder(queue_order, spec_order)
 
-                elif new_status == "CANCELED" or new_status == "REJECTED":
+                elif new_status in ["CANCELED", "REJECTED"]:
 
                     # REMOVE FROM QUEUE
                     self.queue.delete_one({"Trader": self.user["Name"], "Symbol": queue_order["Symbol"],
@@ -473,27 +472,12 @@ class ApiTrader(Tasks, OrderBuilder):
                     direction = "CLOSE POSITION"
 
                     # NEED TO COVER SHORT
-                    if side == "BUY" and position_type == "SHORT":
-
-                        pass
-
-                    # NEED TO SELL LONG
-                    elif side == "SELL" and position_type == "LONG":
-
-                        pass
-
-                    # NEED TO SELL LONG OPTION
-                    elif side == "SELL_TO_CLOSE" and position_type == "LONG":
-
-                        pass
-
-                    # NEED TO COVER SHORT OPTION
-                    elif side == "BUY_TO_CLOSE" and position_type == "SHORT":
-
-                        pass
-
-                    else:
-
+                    if (
+                        (side != "BUY" or position_type != "SHORT")
+                        and (side != "SELL" or position_type != "LONG")
+                        and (side != "SELL_TO_CLOSE" or position_type != "LONG")
+                        and (side != "BUY_TO_CLOSE" or position_type != "SHORT")
+                    ):
                         continue
 
                 else:
@@ -501,27 +485,12 @@ class ApiTrader(Tasks, OrderBuilder):
                     direction = "OPEN POSITION"
 
                     # NEED TO GO LONG
-                    if side == "BUY" and position_type == "LONG":
-
-                        pass
-
-                    # NEED TO GO SHORT
-                    elif side == "SELL" and position_type == "SHORT":
-
-                        pass
-
-                    # NEED TO GO SHORT OPTION
-                    elif side == "SELL_TO_OPEN" and position_type == "SHORT":
-
-                        pass
-
-                    # NEED TO GO LONG OPTION
-                    elif side == "BUY_TO_OPEN" and position_type == "LONG":
-
-                        pass
-
-                    else:
-
+                    if (
+                        (side != "BUY" or position_type != "LONG")
+                        and (side != "SELL" or position_type != "SHORT")
+                        and (side != "SELL_TO_OPEN" or position_type != "SHORT")
+                        and (side != "BUY_TO_OPEN" or position_type != "LONG")
+                    ):
                         continue
 
                 if direction != None:

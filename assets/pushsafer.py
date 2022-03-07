@@ -50,17 +50,13 @@ class PushNotification:
 
             if response.json()["success"] == 'message transmitted':
 
-                self.logger.info(f"Push Sent!\n")
+                self.logger.info("Push Sent!\\n")
 
             else:
 
-                self.logger.warning(f"Push Failed!\n")
+                self.logger.warning("Push Failed!\\n")
 
-        except ValueError:
-
-            pass
-
-        except KeyError:
+        except (ValueError, KeyError):
 
             pass
 
